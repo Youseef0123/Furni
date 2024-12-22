@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Management</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            direction: ltr;
+        }
+
+        h1, h2 {
+            color: #1e3d58;
+            text-align: center;
+        }
+
+        button {
+            background-color: #4CAF50; 
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            margin: 5px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .form-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 500px;
+            margin: 20px auto;
+        }
+
+        table {
+            width: 100%;
+            margin: 20px 0;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        td {
+            background-color: #f9f9f9;
+        }
+
+        .form-container label, 
+        .form-container input {
+            display: block;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .form-container input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Product Management</h1>
+
+    <div style="text-align: center;">
+        <button onclick="showAddProductForm()">Add Product</button>
+        <button onclick="showDeleteProductForm()">Delete Product</button>
+        <button onclick="fetchOrders()">Show Orders</button>
+    </div>
+
+    <!-- Add Product Form -->
+    <div id="addProductForm" class="form-container" style="display:none;">
+        <h2>Add New Product</h2>
+        <label>Name</label>
+        <input type="text" id="name" required>
+        <label>Description</label>
+        <input type="text" id="description" required>
+        <label>Price</label>
+        <input type="number" id="price" required>
+        <label>Image URL</label>
+        <input type="text" id="image_url" required>
+        <label>Category ID</label>
+        <input type="number" id="category_id" required>
+        <button onclick="addProduct()">Add Product</button>
+    </div>
+
+    <!-- Delete Product Form -->
+    <div id="deleteProductForm" class="form-container" style="display:none;">
+        <h2>Delete Product</h2>
+        <label>Product ID</label>
+        <input type="number" id="deleteProductId" required>
+        <button onclick="deleteProduct()">Delete</button>
+    </div>
+
+    <!-- Orders Table -->
+    <div id="ordersSection" style="display:none;">
+        <h2>Orders List</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Product Name</th>
+                    <th>quantity</th>
+                    <th>Total Price</th>
+                    <th>Order Date</th>
+                </tr>
+            </thead>
+            <tbody id="ordersTableBody">
+                <!-- Orders Data -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        function showAddProductForm() {
+            document.getElementById("addProductForm").style.display = "block";
+            document.getElementById("deleteProductForm").style.display = "none";
+            document.getElementById("ordersSection").style.display = "none";
+        }
+
+        function showDeleteProductForm() {
+            document.getElementById("addProductForm").style.display = "none";
+            document.getElementById("deleteProductForm").style.display = "block";
+            document.getElementById("ordersSection").style.display = "none";
+        }
+
+        function fetchOrders() {
+            fetch("http://localhost/furniture_store/get_orders.php")
+                .then(response => response.json())
+                .then(data => {
+                    let ordersTableBody = document.getElementById("ordersTableBody");
+                    ordersTableBody.innerHTML = ""; // Clear previous data
+                    document.getElementById("ordersSection").style.display = "block";
+
+                    data.forEach(order => {
+                        let row = document.createElement("tr");
+                        row.innerHTML = `
+                            <td>${order.id}</td>
+                            <td>${order.product_name}</td>
+                            <td>${order.quantity}</td>
+                            <td>${order.price}</td>
+                            <td>${order.order_date}</td>
+                        `;
+                        ordersTableBody.appendChild(row);
+                    });
+                })
+                .catch(error => console.error('Error fetching orders:', error));
+        }
+
+        function addProduct() {
+            let name = document.getElementById("name").value;
+            let description = document.getElementById("description").value;
+            let price = document.getElementById("price").value;
+            let image_url = document.getElementById("image_url").value;
+            let category_id = document.getElementById("category_id").value;
+
+            fetch("http://localhost/furniture_store/admin_api.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    name: name,
+                    description: description,
+                    price: price,
+                    image_url: image_url,
+                    category_id: category_id
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.success || data.error);
+            })
+            .catch(error => console.error("Error adding product:", error));
+        }
+
+        function deleteProduct() {
+            let productId = document.getElementById("deleteProductId").value;
+            fetch("http://localhost/furniture_store/admin_api.php", {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.success || data.error);
+            })
+            .catch(error => console.error("Error deleting product:", error));
+        }
+    </script>
+</body>
+</html>
